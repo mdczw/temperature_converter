@@ -1,0 +1,55 @@
+name: Master Branch Pipeline
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Lint with Ruff
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+          ruff check --fix
+        continue-on-error: true
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+  
+      - name: Run test
+        run: python temperature_converter_test.py
+
+  docker_push:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+    
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+    
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ vars.DOCKER_IMAGE }}:latest .
+    
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ vars.DOCKER_IMAGE }}:latest
