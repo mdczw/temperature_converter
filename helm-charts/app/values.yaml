@@ -1,0 +1,16 @@
+name: temperature-converter
+namespace: default
+
+image:
+  repository: mdczw/temperature_converter
+  tag: latest
+
+service:
+  port: 8080
+  containerPort: 5000
+
+hpa:
+  minReplicas: 1
+  maxReplicas: 5
+
+
